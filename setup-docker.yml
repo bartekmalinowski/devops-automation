@@ -1,0 +1,49 @@
+---
+- name: Prepare servers for Docker installation
+  hosts: all
+  become: yes # sudo
+  tasks:
+    - name: Update apt package cache and upgrade packages
+      apt:
+        update_cache: yes
+        upgrade: dist
+
+    - name: Install required dependencies
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates # for secure communication
+          - curl # for downloading Docker GPG key
+          - software-properties-common # for managing repositories
+          - gnupg # for handling GPG keys
+        state: present
+
+    - name: Add Docker GPG key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker repository
+      apt_repository:
+        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu noble stable
+        state: present
+
+    - name: Install Docker Engine
+      apt:
+        name: 
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+        state: present
+
+    - name: Ensure Docker service is running and enabled
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Add ubuntu user to docker group
+      user:
+        name: ubuntu
+        groups: docker
+        append: yes
