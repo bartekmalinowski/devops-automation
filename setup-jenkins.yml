@@ -1,0 +1,40 @@
+---
+- name: Install customized Jenkins
+  hosts: jenkins
+  become: yes
+  tasks:
+    - name: Ensure Jenkins data directory exists
+      file:
+        path: /home/ubuntu/jenkins_home
+        state: directory
+        owner: 1000
+        group: 1000
+        mode: '0755'
+
+    - name: Copy Dockerfile to server
+      copy:
+        src: Jenkins.Dockerfile
+        dest: /home/ubuntu/Jenkins.Dockerfile
+
+    - name: Build customized Jenkins image
+      community.docker.docker_image:
+        name: my-jenkins-with-docker
+        build:
+          path: /home/ubuntu
+          dockerfile: Jenkins.Dockerfile
+        source: build
+
+    - name: Run Jenkins container
+      community.docker.docker_container:
+        name: jenkins
+        image: my-jenkins-with-docker
+        state: started
+        recreate: yes  # Ensures the container is updated if the image changed
+        restart_policy: always
+        published_ports:
+          - "8080:8080"
+          - "50000:50000"
+        volumes:
+          - /home/ubuntu/jenkins_home:/var/jenkins_home
+          - /var/run/docker.sock:/var/run/docker.sock
+        user: root # Granting root access to allow interaction with docker.sock
