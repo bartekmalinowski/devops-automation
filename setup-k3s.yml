@@ -3,8 +3,8 @@
   hosts: k8s_master
   become: yes
   tasks:
-    - name: Install K3s Server
-      shell: curl -sfL https://get.k3s.io | sh -
+    - name: Install K3s Server with Public IP in cert
+      shell: "curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC='--tls-san {{ ansible_host }}' sh -"
       
     - name: Retrieve cluster token
       command: cat /var/lib/rancher/k3s/server/node-token
