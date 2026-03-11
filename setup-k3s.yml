@@ -1,0 +1,21 @@
+---
+- name: K3s Master Configuration
+  hosts: k8s_master
+  become: yes
+  tasks:
+    - name: Install K3s Server
+      shell: curl -sfL https://get.k3s.io | sh -
+      
+    - name: Retrieve cluster token
+      command: cat /var/lib/rancher/k3s/server/node-token
+      register: k3s_token
+
+- name: K3s Worker Configuration
+  hosts: k8s_worker
+  become: yes
+  tasks:
+    - name: Join Worker to the cluster
+      shell: >
+        curl -sfL https://get.k3s.io | 
+        K3S_URL=https://{{ hostvars['k8s-master']['ansible_host'] }}:6443 
+        K3S_TOKEN={{ hostvars['k8s-master']['k3s_token']['stdout'] }} sh -
